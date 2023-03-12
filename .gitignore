@@ -1,8 +1,15 @@
 to-spreadsheet
 !**/to-spreadsheet/
 
-# Created by https://www.toptal.com/developers/gitignore/api/go,goland+all,macos
-# Edit at https://www.toptal.com/developers/gitignore?templates=go,goland+all,macos
+# Created by https://www.toptal.com/developers/gitignore/api/go,macos,goland+all,direnv,dotenv
+# Edit at https://www.toptal.com/developers/gitignore?templates=go,macos,goland+all,direnv,dotenv
+
+### direnv ###
+.direnv
+.envrc
+
+### dotenv ###
+.env
 
 ### Go ###
 # If you prefer the allow list template instead of the deny list, see community template:
@@ -148,7 +155,7 @@ Temporary Items
 # iCloud generated files
 *.icloud
 
-# End of https://www.toptal.com/developers/gitignore/api/go,goland+all,macos
+# End of https://www.toptal.com/developers/gitignore/api/go,macos,goland+all,direnv,dotenv
 
 
 dist/
