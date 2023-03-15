@@ -49,7 +49,7 @@ func AddFileDataToNewSheet(ctx context.Context, r io.Reader, opt AddOption) erro
 	}
 
 	// Create a new sheet
-	if opt.Append == false {
+	if !opt.Append {
 		req := &sheets.BatchUpdateSpreadsheetRequest{
 			Requests: []*sheets.Request{
 				{AddSheet: &sheets.AddSheetRequest{Properties: &sheets.SheetProperties{Title: opt.NewSheetTitle}}},
