@@ -3,6 +3,7 @@ module github.com/haijima/spreadit
 go 1.19
 
 require (
+	github.com/h2non/gock v1.2.0
 	github.com/haijima/cobrax v0.0.4
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/cobra v1.6.1
@@ -21,6 +22,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
+	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
