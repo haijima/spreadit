@@ -2,7 +2,17 @@
 CLI to add csv data to Google Sheet
 
 ## Usage
-Add stdin csv data as a new sheet to the specified Google Sheet file
+
 ``` sh
-cat data.csv | spreadit --id=xxxxxxxxxx --title=newSheetTitle
+# specify csv file
+spreadit -f data.csv --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet'
+
+# or pipe data
+cat data.csv | spreadit --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet'
+```
+
+## Install
+
+``` sh
+go install github.com/haijima/spreadit@latest
 ```
