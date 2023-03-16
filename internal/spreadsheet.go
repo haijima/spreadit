@@ -21,13 +21,21 @@ type AddOption struct {
 	Verbose       *log.Logger
 }
 
-func AddFileDataToNewSheet(ctx context.Context, r io.Reader, opt AddOption) error {
-	credential := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	srv, err := sheets.NewService(ctx, option.WithCredentialsFile(credential))
-	if err != nil {
-		return fmt.Errorf("unable to retrieve Sheets client: %v", err)
-	}
+var DefaultOptions []option.ClientOption
 
+type SheetsService struct {
+	srv *sheets.Service
+}
+
+func NewSheetsService(ctx context.Context) (*SheetsService, error) {
+	srv, err := sheets.NewService(ctx, clientOptions()...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve Sheets client: %v", err)
+	}
+	return &SheetsService{srv}, nil
+}
+
+func (s *SheetsService) AddFileDataToNewSheet(ctx context.Context, r io.Reader, opt AddOption) error {
 	// Read CSV data
 	reader := csv.NewReader(r)
 	records, err := reader.ReadAll()
@@ -55,14 +63,19 @@ func AddFileDataToNewSheet(ctx context.Context, r io.Reader, opt AddOption) erro
 				{AddSheet: &sheets.AddSheetRequest{Properties: &sheets.SheetProperties{Title: opt.NewSheetTitle}}},
 			},
 		}
-		if _, err := srv.Spreadsheets.BatchUpdate(opt.SpreadsheetID, req).Context(ctx).Do(); err != nil {
+		if _, err := s.srv.Spreadsheets.BatchUpdate(opt.SpreadsheetID, req).Context(ctx).Do(); err != nil {
 			return fmt.Errorf("unable to add sheet to spreadsheet: %v", err)
 		}
 	}
 
 	// Add CSV data to sheet
-	if _, err := srv.Spreadsheets.Values.Update(opt.SpreadsheetID, fmt.Sprintf("'%s'!%s", opt.NewSheetTitle, opt.Range), valueRange).ValueInputOption("RAW").Context(ctx).Do(); err != nil {
+	if _, err := s.srv.Spreadsheets.Values.Update(opt.SpreadsheetID, fmt.Sprintf("'%s'!%s", opt.NewSheetTitle, opt.Range), valueRange).ValueInputOption("RAW").Context(ctx).Do(); err != nil {
 		return fmt.Errorf("unable to add csv data to sheet: %v", err)
 	}
 	return nil
+}
+
+func clientOptions() []option.ClientOption {
+	credential := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	return append(DefaultOptions, option.WithCredentialsFile(credential))
 }

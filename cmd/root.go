@@ -30,7 +30,11 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 			Debug:         cmd.D,
 			Verbose:       cmd.V,
 		}
-		return internal.AddFileDataToNewSheet(cmd.Context(), r, opt)
+		service, err := internal.NewSheetsService(cmd.Context())
+		if err != nil {
+			return err
+		}
+		return service.AddFileDataToNewSheet(cmd.Context(), r, opt)
 	}
 
 	rootCmd.Flags().StringP("file", "f", "", "The file name to read CSV data from. If not specified, read from stdin.")
