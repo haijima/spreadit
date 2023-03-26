@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+
+	"github.com/briandowns/spinner"
 	"github.com/haijima/cobrax"
 	"github.com/haijima/spreadit/internal"
 	"github.com/spf13/afero"
@@ -17,24 +20,72 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
   cat data.csv | spreadit -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'`
 	rootCmd.Args = cobra.NoArgs
 	rootCmd.RunE = func(cmd *cobrax.Command, args []string) error {
-		r, err := cmd.OpenOrStdIn(cmd.Viper().GetString("file"))
+		spreadsheetId := cmd.Viper().GetString("id")
+		title := cmd.Viper().GetString("title")
+		a1Range := cmd.Viper().GetString("range")
+		doesAppend := cmd.Viper().GetBool("append")
+		file := cmd.Viper().GetString("file")
+		r, err := cmd.OpenOrStdIn(file)
 		if err != nil {
 			return err
 		}
 		defer r.Close()
-		opt := internal.AddOption{
-			SpreadsheetID: cmd.Viper().GetString("id"),
-			NewSheetTitle: cmd.Viper().GetString("title"),
-			Range:         cmd.Viper().GetString("range"),
-			Append:        cmd.Viper().GetBool("append"),
-			Debug:         cmd.D,
-			Verbose:       cmd.V,
-		}
-		service, err := internal.NewSheetsService(cmd.Context())
+
+		ctx := cmd.Context()
+		service, err := internal.NewSheetsService(ctx)
 		if err != nil {
 			return err
 		}
-		return service.AddFileDataToNewSheet(cmd.Context(), r, opt)
+
+		tasks := NewTasks([]string{"Retrieve spreadsheet info", "Read CSV data", "Create a new sheet", "Add CSV data to the sheet"}, spinner.WithWriter(cmd.ErrOrStderr()))
+		defer tasks.Close()
+		tasks.Start()
+
+		// 1. Retrieve spreadsheet
+		spreadsheet, err := service.RetrieveSpreadsheet(ctx, spreadsheetId)
+		if err != nil {
+			return err
+		}
+		var sheetId int64
+		for _, sheet := range spreadsheet.Sheets {
+			if sheet.Properties.Title == title {
+				sheetId = sheet.Properties.SheetId
+				break
+			}
+		}
+		if sheetId != 0 && !doesAppend {
+			return fmt.Errorf("a sheet with the name \"%s\" already exists. Please enter another name or use --apend flag", title)
+		}
+		tasks.Next()
+
+		// 2. Read CSV data
+		valueRange, err := service.ReadCsv(r)
+		if err != nil {
+			return err
+		}
+		tasks.Next()
+
+		// 3. Create a new sheet
+		if !doesAppend {
+			if err := service.CreateNewSheet(ctx, spreadsheetId, title); err != nil {
+				return err
+			}
+			tasks.Next()
+		} else {
+			tasks.Skip()
+		}
+
+		// 4. Add CSV data to sheet
+		if err := service.AddCsvToSheet(ctx, spreadsheetId, title, a1Range, valueRange); err != nil {
+			return err
+		}
+		tasks.Next()
+
+		cmd.PrintErrln()
+		cmd.PrintErrln("Add CSV data to Google Sheets successfully!")
+		cmd.PrintErrf("Open %s#gid=%d\n", spreadsheet.SpreadsheetUrl, sheetId)
+		cmd.PrintErrln()
+		return nil
 	}
 
 	rootCmd.Flags().StringP("file", "f", "", "The file name to read CSV data from. If not specified, read from stdin.")

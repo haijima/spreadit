@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/option"
+	"google.golang.org/api/sheets/v4"
 )
 
 func TestNewRootCmd(t *testing.T) {
@@ -22,6 +23,7 @@ func TestNewRootCmd(t *testing.T) {
 
 func TestRootCmdExecute(t *testing.T) {
 	defer gock.Off()
+	gock.New("https://sheets.googleapis.com").Reply(200).JSON(sheets.Spreadsheet{Sheets: []*sheets.Sheet{}})
 	gock.New("https://sheets.googleapis.com").Reply(200).JSON(nil)
 	gock.New("https://sheets.googleapis.com").Reply(200).JSON(nil)
 
