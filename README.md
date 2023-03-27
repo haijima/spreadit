@@ -6,15 +6,40 @@
 
 CLI to add csv data to Google Sheet
 
-## Usage
+## Synopsis
+
+``` sh
+spreadit {--id|-i} <spreadsheet_id> [--file|-f <file>] [--title|-t <title>] [--range|-r <range>] [--append|-a]
+```
+
+### Options
+
+| Option     | Shorthand | Type   |          | Description                                     | Default  |
+|------------|-----------|--------|----------|-------------------------------------------------|----------|
+| `--id`     | `-i`      | string | required | Spreadsheet ID                                  |          |
+| `--file`   | `-f`      | string |          | CSV file path. If not specified read from stdin |          |
+| `--title`  | `-t`      | string |          | Sheet title                                     | "Sheet1" |
+| `--range`  | `-r`      | string |          | Range to write.                                 | "A1"     |
+| `--append` | `-a`      | string |          | Append data to the end of the sheet             |          |
+
+### Examples
 
 ``` sh
 # specify csv file
-spreadit -f data.csv --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet'
+spreadit --file data.csv --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet'
 
 # or pipe data
 cat data.csv | spreadit --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet'
+
+# or redirect into stdin
+spreadit --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet' < data.csv
 ```
+
+## Requirements
+
+`spreadit` requires the following environment variables to be set:
+
+- `GOOGLE_APPLICATION_CREDENTIALS`: path to the service account key file
 
 ## Install
 
@@ -24,4 +49,5 @@ go install github.com/haijima/spreadit@latest
 
 ## License
 
-This tool is licensed under the MIT License. See the [LICENSE](https://github.com/haijima/spreadit/blob/main/LICENSE) file for details.
+This tool is licensed under the MIT License. See the [LICENSE](https://github.com/haijima/spreadit/blob/main/LICENSE)
+file for details.
