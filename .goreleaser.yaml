@@ -7,7 +7,7 @@ builds:
     binary: spreadit
     ldflags:
       - -s -w
-      - -X github.com/haijima/spreadit/main.Version={{.Version}}
+      - -X github.com/haijima/spreadit/cmd.Version={{.Version}}
     flags:
       - -trimpath
     env:
