@@ -20,7 +20,7 @@ spreadit {--id|-i} <spreadsheet_id> [--file|-f <file>] [--title|-t <title>] [--r
 | `--file`   | `-f`      | string |          | CSV file path. If not specified read from stdin |          |
 | `--title`  | `-t`      | string |          | Sheet title                                     | "Sheet1" |
 | `--range`  | `-r`      | string |          | Range to write.                                 | "A1"     |
-| `--append` | `-a`      | string |          | Append data to the end of the sheet             |          |
+| `--append` | `-a`      | bool   |          | Append data to the end of the sheet             | false    |
 
 ### Examples
 
@@ -43,9 +43,14 @@ spreadit --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet' < data.csv
 
 ## Install
 
+You can install `spreadit` using the following command:
+
 ``` sh
 go install github.com/haijima/spreadit@latest
 ```
+
+or you can download binaries from [Releases](https://github.com/haijima/spreadit/releases).
+
 
 ## License
 
