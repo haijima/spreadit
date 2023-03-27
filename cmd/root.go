@@ -25,11 +25,6 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 		a1Range := cmd.Viper().GetString("range")
 		doesAppend := cmd.Viper().GetBool("append")
 		file := cmd.Viper().GetString("file")
-		r, err := cmd.OpenOrStdIn(file)
-		if err != nil {
-			return err
-		}
-		defer r.Close()
 
 		ctx := cmd.Context()
 		service, err := internal.NewSheetsService(ctx)
@@ -37,11 +32,35 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 			return err
 		}
 
-		tasks := NewTasks([]string{"Retrieve spreadsheet info", "Read CSV data", "Create a new sheet", "Add CSV data to the sheet"}, spinner.WithWriter(cmd.ErrOrStderr()))
+		r, err := cmd.OpenOrStdIn(file)
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+
+		in := file
+		if in == "" {
+			in = "stdin"
+		}
+		tasks := NewTasks(
+			[]string{
+				fmt.Sprintf("Read CSV data from %s", in),
+				"Retrieve spreadsheet info",
+				"Create a new sheet",
+				"Add CSV data to the sheet",
+			},
+			spinner.WithWriter(cmd.ErrOrStderr()))
 		defer tasks.Close()
 		tasks.Start()
 
-		// 1. Retrieve spreadsheet
+		// 1. Read CSV data
+		valueRange, err := service.ReadCsv(r)
+		if err != nil {
+			return err
+		}
+		tasks.Next()
+
+		// 2. Retrieve spreadsheet
 		spreadsheet, err := service.RetrieveSpreadsheet(ctx, spreadsheetId)
 		if err != nil {
 			return err
@@ -54,14 +73,7 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 			}
 		}
 		if sheetId != 0 && !doesAppend {
-			return fmt.Errorf("a sheet with the name \"%s\" already exists. Please enter another name or use --apend flag", title)
-		}
-		tasks.Next()
-
-		// 2. Read CSV data
-		valueRange, err := service.ReadCsv(r)
-		if err != nil {
-			return err
+			return fmt.Errorf("a sheet with the title \"%s\" already exists. Please enter another name or use --apend flag", title)
 		}
 		tasks.Next()
 
