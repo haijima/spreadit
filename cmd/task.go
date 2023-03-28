@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
+	"github.com/mattn/go-colorable"
 )
 
 type task struct {
@@ -13,6 +16,7 @@ type task struct {
 	finalMSGFormat string
 }
 
+// Tasks shows status of registered tasks.
 type Tasks struct {
 	tasks   []*task
 	current int
@@ -24,6 +28,10 @@ func NewTasks(names []string, opts ...spinner.Option) Tasks {
 		t := &task{name: name, spinner: *spinner.New(spinner.CharSets[14], 100*time.Millisecond)}
 		for _, opt := range opts {
 			opt(&t.spinner)
+		}
+
+		if file, ok := t.spinner.Writer.(*os.File); ok {
+			t.spinner.Writer = colorable.NewColorable(file)
 		}
 		t.spinner.Prefix = " "
 		t.spinner.Suffix = fmt.Sprintf(" [%d/%d] %s...", i+1, len(names), name)
@@ -41,7 +49,8 @@ func (t *Tasks) Start() {
 
 // Next stops the current task and starts the next task
 func (t *Tasks) Next() {
-	t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, "Done")
+	s := color.GreenString("Done")
+	t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, s)
 	t.tasks[t.current].spinner.Stop()
 	t.current++
 	if t.current < len(t.tasks) {
@@ -51,12 +60,14 @@ func (t *Tasks) Next() {
 
 // Error stops the current task
 func (t *Tasks) Error() {
-	t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, "Error")
+	s := color.RedString("Error")
+	t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, s)
 	t.tasks[t.current].spinner.Stop()
 }
 
 func (t *Tasks) Skip() {
-	t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, "Skipped")
+	s := color.HiBlackString("Skipped")
+	t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, s)
 	t.tasks[t.current].spinner.Stop()
 	t.current++
 	if t.current < len(t.tasks) {
@@ -68,7 +79,8 @@ func (t *Tasks) Skip() {
 func (t *Tasks) Close() {
 	for _, task := range t.tasks {
 		if task.spinner.Active() {
-			t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, "Error")
+			s := color.RedString("Error")
+			t.tasks[t.current].spinner.FinalMSG = fmt.Sprintf(t.tasks[t.current].finalMSGFormat, s)
 			task.spinner.Stop()
 		}
 	}
