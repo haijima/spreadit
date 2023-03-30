@@ -80,7 +80,7 @@ func (s *SheetsService) CreateNewSheet(ctx context.Context, spreadSheetId, sheet
 }
 
 func (s *SheetsService) AddCsvToSheet(ctx context.Context, spreadSheetId, sheetTitle, a1Range string, valueRange *sheets.ValueRange) error {
-	if _, err := s.srv.Spreadsheets.Values.Update(spreadSheetId, fmt.Sprintf("'%s'!%s", sheetTitle, a1Range), valueRange).ValueInputOption("RAW").Context(ctx).Do(); err != nil {
+	if _, err := s.srv.Spreadsheets.Values.Update(spreadSheetId, fmt.Sprintf("'%s'!%s", sheetTitle, a1Range), valueRange).ValueInputOption("USER_ENTERED").Context(ctx).Do(); err != nil {
 		return fmt.Errorf("unable to add csv data to sheet: %v", err)
 	}
 	return nil
