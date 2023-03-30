@@ -27,6 +27,12 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 		a1Range := cmd.Viper().GetString("range")
 		doesAppend := cmd.Viper().GetBool("append")
 		file := cmd.Viper().GetString("file")
+		if spreadsheetId == "" {
+			return fmt.Errorf("spreadsheet ID is required. Use --id or -i")
+		}
+		if title == "" {
+			return fmt.Errorf("title is required. Use --title or -t")
+		}
 
 		ctx := cmd.Context()
 		service, err := internal.NewSheetsService(ctx)
