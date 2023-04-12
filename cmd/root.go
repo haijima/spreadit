@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"runtime/debug"
 
 	"github.com/briandowns/spinner"
 	"github.com/haijima/cobrax"
@@ -20,7 +19,6 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 	rootCmd.Example = `  spreadit -f data.csv -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'
   cat data.csv | spreadit -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'`
 	rootCmd.Args = cobra.NoArgs
-	rootCmd.Version = version()
 	rootCmd.RunE = func(cmd *cobrax.Command, args []string) error {
 		spreadsheetId := cmd.Viper().GetString("id")
 		title := cmd.Viper().GetString("title")
@@ -108,7 +106,6 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 		return nil
 	}
 
-	rootCmd.PersistentFlags().Bool("version", false, "Show the version of this command")
 	rootCmd.Flags().StringP("file", "f", "", "The file name to read CSV data from. If not specified, read from stdin.")
 	rootCmd.Flags().StringP("id", "i", "", "The ID of the Google Sheets spreadsheet to add the new sheet to")
 	rootCmd.Flags().StringP("title", "t", "", "The name of the new sheet to create")
@@ -116,17 +113,4 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 	rootCmd.Flags().BoolP("append", "a", false, "Append the CSV data to the end of the existing sheet instead of creating a new sheet")
 
 	return rootCmd
-}
-
-// Version is set in build step
-var Version = ""
-
-func version() string {
-	if Version != "" {
-		return Version
-	}
-	if buildInfo, ok := debug.ReadBuildInfo(); ok && buildInfo.Main.Version != "" {
-		return buildInfo.Main.Version
-	}
-	return "(devel)"
 }
