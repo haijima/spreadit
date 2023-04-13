@@ -14,13 +14,13 @@ spreadit {--id|-i} <spreadsheet_id> [--file|-f <file>] [--title|-t <title>] [--r
 
 ### Options
 
-| Option     | Shorthand | Type   |          | Description                                     | Default  |
-|------------|-----------|--------|----------|-------------------------------------------------|----------|
-| `--id`     | `-i`      | string | required | Spreadsheet ID                                  |          |
-| `--file`   | `-f`      | string |          | CSV file path. If not specified read from stdin |          |
-| `--title`  | `-t`      | string |          | Sheet title                                     | "Sheet1" |
-| `--range`  | `-r`      | string |          | Range to write.                                 | "A1"     |
-| `--append` | `-a`      | bool   |          | Append data to the end of the sheet             | false    |
+| Option     | Shorthand | Type   | Description                                     | Default  |
+|------------|-----------|--------|-------------------------------------------------|----------|
+| `--id`     | `-i`      | string | Spreadsheet ID                                  |          |
+| `--file`   | `-f`      | string | CSV file path. If not specified read from stdin (optional) |          |
+| `--title`  | `-t`      | string | Sheet title (optional)                                     | "Sheet1" |
+| `--range`  | `-r`      | string | Range to write (optional)                                 | "A1"     |
+| `--append` | `-a`      | bool   | Append data to the end of the sheet (optional)             | false    |
 
 ### Examples
 
