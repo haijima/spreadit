@@ -4,23 +4,13 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/haijima/spreadit.svg)](https://pkg.go.dev/github.com/haijima/spreadit)
 [![Go report](https://goreportcard.com/badge/github.com/haijima/spreadit)](https://goreportcard.com/report/github.com/haijima/spreadit)
 
-CLI to add csv data to Google Sheet
+`spreadit` is a simple CLI tool to write CSV data to Google Sheets.
 
-## Synopsis
+## Usage
 
 ``` sh
-spreadit {--id|-i} <spreadsheet_id> [--file|-f <file>] [--title|-t <title>] [--range|-r <range>] [--append|-a]
+spreadit --id <spreadsheet_id> --title <title> [--file <file>] [--range <range>] [--append]
 ```
-
-### Options
-
-| Option          | Type   | Description                                                | Default  |
-|-----------------|--------|------------------------------------------------------------|----------|
-| `--id` `-i`     | string | Spreadsheet ID                                             |          |
-| `--file` `-f`   | string | CSV file path. If not specified read from stdin (optional) |          |
-| `--title` `-t`  | string | Sheet title (optional)                                     | "Sheet1" |
-| `--range` `-r`  | string | Range to write (optional)                                  | "A1"     |
-| `--append` `-a` | bool   | Append data to the end of the sheet (optional)             | false    |
 
 ### Examples
 
@@ -35,11 +25,47 @@ cat data.csv | spreadit --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet'
 spreadit --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet' < data.csv
 ```
 
+### Options
+
+| Option          | Type   | Description                                                | Default |
+|-----------------|--------|------------------------------------------------------------|---------|
+| `--id` `-i`     | string | Spreadsheet ID                                             |         |
+| `--title` `-t`  | string | Sheet title                                                |         |
+| `--file` `-f`   | string | CSV file path. If not specified read from stdin (optional) |         |
+| `--range` `-r`  | string | Range to write (optional)                                  | "A1"    |
+| `--append` `-a` | bool   | Append data to the end of the sheet (optional)             | false   |
+| `--config`      | string | Config file path (optional)                                |         |
+
+### Config file
+
+You can specify the default options in the config file.
+
+``` yaml
+# ~/.config/spreadit/.spreadit.yaml
+id: 1X2Y3Z4W5V6U7T8S9R0Q
+title: New Sheet
+file: data.csv
+range: A1
+append: true
+```
+
+Config file is searched in the following order:
+
+1. `--config` option
+2. `$CURRENT_DIR/.spreadit.yaml`
+3. `$XDG_CONFIG_HOME/spreadit/.spreadit.yaml`
+4. `$HOME/.config/spreadit/.spreadit.yaml` when `$XDG_CONFIG_HOME` is not set
+5. `$HOME/.spreadit.yaml`
+
+[YAML](https://yaml.org/), [JSON](https://www.json.org/json-en.html) or [TOML](https://toml.io/en/) format is supported.
+
 ## Requirements
 
 `spreadit` requires the following environment variables to be set:
 
 - `GOOGLE_APPLICATION_CREDENTIALS`: path to the service account key file
+
+See [here](https://cloud.google.com/docs/authentication/getting-started) for more details.
 
 ## Install
 
@@ -50,7 +76,6 @@ go install github.com/haijima/spreadit@latest
 ```
 
 or you can download binaries from [Releases](https://github.com/haijima/spreadit/releases).
-
 
 ## License
 

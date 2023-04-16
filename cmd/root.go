@@ -13,7 +13,7 @@ import (
 
 func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 	rootCmd := cobrax.NewCommand(v, fs)
-	rootCmd.Use = "spreadit {--id|-i} <spreadsheet_id> [--file|-f <file>] [--title|-t <title>] [--range|-r <range>] [--append|-a]"
+	rootCmd.Use = "spreadit --id <spreadsheet_id> --title <title> [--file <file>] [--range <range>] [--append]"
 	rootCmd.DisableFlagsInUseLine = true
 	rootCmd.Short = "Add CSV data to Google Sheets"
 	rootCmd.Example = `  spreadit -f data.csv -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'
