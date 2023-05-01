@@ -43,9 +43,10 @@ func (s *SheetsService) RetrieveSpreadsheet(ctx context.Context, spreadsheetId s
 	return spreadsheet, nil
 }
 
-func (s *SheetsService) ReadCsv(r io.Reader) (*sheets.ValueRange, error) {
+func (s *SheetsService) ReadCsv(r io.Reader, sep rune) (*sheets.ValueRange, error) {
 	// Read CSV data
 	reader := csv.NewReader(r)
+	reader.Comma = sep
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("unable to read CSV data from file or stdin: %v", err)
@@ -67,16 +68,24 @@ func (s *SheetsService) ReadCsv(r io.Reader) (*sheets.ValueRange, error) {
 	return valueRange, nil
 }
 
-func (s *SheetsService) CreateNewSheet(ctx context.Context, spreadSheetId, sheetTitle string) error {
+func (s *SheetsService) CreateNewSheet(ctx context.Context, spreadSheetId, sheetTitle string) (int64, error) {
 	req := &sheets.BatchUpdateSpreadsheetRequest{
 		Requests: []*sheets.Request{
 			{AddSheet: &sheets.AddSheetRequest{Properties: &sheets.SheetProperties{Title: sheetTitle}}},
 		},
+		IncludeSpreadsheetInResponse: true,
 	}
-	if _, err := s.srv.Spreadsheets.BatchUpdate(spreadSheetId, req).Context(ctx).Do(); err != nil {
-		return fmt.Errorf("unable to add sheet to spreadsheet: %v", err)
+	res, err := s.srv.Spreadsheets.BatchUpdate(spreadSheetId, req).Context(ctx).Do()
+	if err != nil {
+		return 0, fmt.Errorf("unable to add sheet to spreadsheet: %v", err)
 	}
-	return nil
+
+	for _, sheet := range res.UpdatedSpreadsheet.Sheets {
+		if sheet.Properties.Title == sheetTitle {
+			return sheet.Properties.SheetId, nil
+		}
+	}
+	return 0, fmt.Errorf("created sheet was not found")
 }
 
 func (s *SheetsService) AddCsvToSheet(ctx context.Context, spreadSheetId, sheetTitle, a1Range string, valueRange *sheets.ValueRange) error {

@@ -90,9 +90,11 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 
 		// 3. Create a new sheet
 		if !doesAppend {
-			if err := service.CreateNewSheet(ctx, spreadsheetId, title); err != nil {
+			insertedSheetId, err := service.CreateNewSheet(ctx, spreadsheetId, title)
+			if err != nil {
 				return err
 			}
+			sheetId = insertedSheetId
 			tasks.Next()
 		} else {
 			tasks.Skip()
