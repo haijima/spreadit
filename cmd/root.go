@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/haijima/cobrax"
@@ -23,6 +24,7 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 	rootCmd.Flags().StringP("title", "t", "", "The name of the new sheet to create")
 	rootCmd.Flags().String("range", "A1", "The range to append the CSV data to.")
 	rootCmd.Flags().BoolP("append", "a", false, "Append the CSV data to the end of the existing sheet instead of creating a new sheet")
+	rootCmd.Flags().String("format", "csv", "The format of the data to read. Valid values are 'csv' and 'tsv'")
 	rootCmd.Args = cobra.NoArgs
 	rootCmd.RunE = func(cmd *cobrax.Command, args []string) error {
 		spreadsheetId := cmd.Viper().GetString("id")
@@ -30,11 +32,16 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 		a1Range := cmd.Viper().GetString("range")
 		doesAppend := cmd.Viper().GetBool("append")
 		file := cmd.Viper().GetString("file")
+		format := cmd.Viper().GetString("format")
+		format = strings.ToLower(format)
 		if spreadsheetId == "" {
 			return fmt.Errorf("spreadsheet ID is required. Use --id or -i")
 		}
 		if title == "" {
 			return fmt.Errorf("title is required. Use --title or -t")
+		}
+		if format != "csv" && format != "tsv" {
+			return fmt.Errorf("invalid format: %s", format)
 		}
 
 		ctx := cmd.Context()
@@ -55,17 +62,21 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 		}
 		tasks := NewTasks(
 			[]string{
-				fmt.Sprintf("Read CSV data from %s", in),
+				fmt.Sprintf("Read %s data from %s", format, in),
 				"Retrieve spreadsheet info",
 				"Create a new sheet",
-				"Add CSV data to the sheet",
+				fmt.Sprintf("Add %s data to the sheet", format),
 			},
 			spinner.WithWriter(cmd.ErrOrStderr()))
 		defer tasks.Close()
 		tasks.Start()
 
 		// 1. Read CSV data
-		valueRange, err := service.ReadCsv(r)
+		sep := ','
+		if format == "tsv" {
+			sep = '\t'
+		}
+		valueRange, err := service.ReadCsv(r, sep)
 		if err != nil {
 			return err
 		}
@@ -107,7 +118,7 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 		tasks.Next()
 
 		cmd.PrintErrln()
-		cmd.PrintErrln("Add CSV data to Google Sheets successfully!")
+		cmd.PrintErrf("Add %s data to Google Sheets successfully!", format)
 		cmd.PrintErrf("Open %s#gid=%d\n", spreadsheet.SpreadsheetUrl, sheetId)
 		cmd.PrintErrln()
 		return nil
