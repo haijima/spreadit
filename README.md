@@ -34,6 +34,7 @@ spreadit --id 1X2Y3Z4W5V6U7T8S9R0Q --title 'New Sheet' < data.csv
 | `--file` `-f`   | string | CSV file path. If not specified read from stdin (optional) |         |
 | `--range` `-r`  | string | Range to write (optional)                                  | "A1"    |
 | `--append` `-a` | bool   | Append data to the end of the sheet (optional)             | false   |
+| `--format`      | string | Input format. `csv` or `tsv` (optional)                    | "csv"   |
 | `--config`      | string | Config file path (optional)                                |         |
 
 ### Config file
@@ -47,6 +48,7 @@ title: New Sheet
 file: data.csv
 range: A1
 append: true
+format: csv
 ```
 
 Config file is searched in the following order:
