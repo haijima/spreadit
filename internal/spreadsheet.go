@@ -5,21 +5,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
-
-type AddOption struct {
-	SpreadsheetID string
-	NewSheetTitle string
-	Range         string
-	Append        bool
-	Debug         *log.Logger
-	Verbose       *log.Logger
-}
 
 var DefaultOptions []option.ClientOption
 
