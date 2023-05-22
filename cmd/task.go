@@ -2,12 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"github.com/mattn/go-colorable"
 )
 
 type task struct {
@@ -30,9 +28,6 @@ func NewTasks(names []string, opts ...spinner.Option) Tasks {
 			opt(&t.spinner)
 		}
 
-		if file, ok := t.spinner.Writer.(*os.File); ok {
-			t.spinner.Writer = colorable.NewColorable(file)
-		}
 		t.spinner.Prefix = " "
 		t.spinner.Suffix = fmt.Sprintf(" [%d/%d] %s...", i+1, len(names), name)
 		t.finalMSGFormat = fmt.Sprintf("   [%d/%d] %s (%%s)\n", i+1, len(names), name)

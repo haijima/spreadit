@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 	"github.com/haijima/cobrax"
 	"github.com/haijima/spreadit/internal"
 	"github.com/spf13/afero"
@@ -19,13 +20,20 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 	rootCmd.Short = "Add CSV data to Google Sheets"
 	rootCmd.Example = `  spreadit -f data.csv -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'
   cat data.csv | spreadit -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'`
+
 	rootCmd.Flags().StringP("file", "f", "", "The file name to read CSV data from. If not specified, read from stdin.")
 	rootCmd.Flags().StringP("id", "i", "", "The ID of the Google Sheets spreadsheet to add the new sheet to")
 	rootCmd.Flags().StringP("title", "t", "", "The name of the new sheet to create")
 	rootCmd.Flags().String("range", "A1", "The range to append the CSV data to.")
 	rootCmd.Flags().BoolP("append", "a", false, "Append the CSV data to the end of the existing sheet instead of creating a new sheet")
 	rootCmd.Flags().String("format", "csv", "The format of the data to read. Valid values are 'csv' and 'tsv'")
+	rootCmd.Flags().Bool("no_color", false, "disable colorized output")
 	rootCmd.Args = cobra.NoArgs
+
+	rootCmd.PersistentPreRunE = func(cmd *cobrax.Command, args []string) error {
+		color.NoColor = color.NoColor || cmd.Viper().GetBool("no_color")
+		return nil
+	}
 	rootCmd.RunE = func(cmd *cobrax.Command, args []string) error {
 		spreadsheetId := cmd.Viper().GetString("id")
 		title := cmd.Viper().GetString("title")
