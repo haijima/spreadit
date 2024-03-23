@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/briandowns/spinner"
-	"github.com/fatih/color"
 	"github.com/haijima/cobrax"
 	"github.com/haijima/spreadit/internal"
 	"github.com/spf13/afero"
@@ -13,13 +12,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
-	rootCmd := cobrax.NewCommand(v, fs)
+func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobra.Command {
+	rootCmd := cobrax.NewRoot(v)
 	rootCmd.Use = "spreadit --id <spreadsheet_id> --title <title> [--file <file>] [--range <range>] [--append]"
 	rootCmd.DisableFlagsInUseLine = true
 	rootCmd.Short = "Add CSV data to Google Sheets"
 	rootCmd.Example = `  spreadit -f data.csv -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'
   cat data.csv | spreadit -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'`
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		return cobrax.RootPersistentPreRunE(cmd, v, fs, args)
+	}
+	rootCmd.RunE = func(cmd *cobra.Command, args []string) error { return run(cmd, v, fs, args) }
 
 	rootCmd.Flags().StringP("file", "f", "", "The file name to read CSV data from. If not specified, read from stdin.")
 	rootCmd.Flags().StringP("id", "i", "", "The ID of the Google Sheets spreadsheet to add the new sheet to")
@@ -28,109 +31,104 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobrax.Command {
 	rootCmd.Flags().BoolP("append", "a", false, "Append the CSV data to the end of the existing sheet instead of creating a new sheet")
 	rootCmd.Flags().String("format", "csv", "The format of the data to read. Valid values are 'csv' and 'tsv'")
 	rootCmd.Flags().Bool("no_color", false, "disable colorized output")
-	rootCmd.Args = cobra.NoArgs
-
-	rootCmd.PersistentPreRunE = func(cmd *cobrax.Command, args []string) error {
-		color.NoColor = color.NoColor || cmd.Viper().GetBool("no_color")
-		return nil
-	}
-	rootCmd.RunE = func(cmd *cobrax.Command, args []string) error {
-		spreadsheetId := cmd.Viper().GetString("id")
-		title := cmd.Viper().GetString("title")
-		a1Range := cmd.Viper().GetString("range")
-		doesAppend := cmd.Viper().GetBool("append")
-		file := cmd.Viper().GetString("file")
-		format := cmd.Viper().GetString("format")
-		format = strings.ToLower(format)
-		if spreadsheetId == "" {
-			return fmt.Errorf("spreadsheet ID is required. Use --id or -i")
-		}
-		if title == "" {
-			return fmt.Errorf("title is required. Use --title or -t")
-		}
-		if format != "csv" && format != "tsv" {
-			return fmt.Errorf("invalid format: %s", format)
-		}
-
-		ctx := cmd.Context()
-		service, err := internal.NewSheetsService(ctx)
-		if err != nil {
-			return err
-		}
-
-		r, err := cmd.OpenOrStdIn(file)
-		if err != nil {
-			return err
-		}
-		defer r.Close()
-
-		in := file
-		if in == "" {
-			in = "stdin"
-		}
-		tasks := NewTasks(
-			[]string{
-				fmt.Sprintf("Read %s data from %s", format, in),
-				"Retrieve spreadsheet info",
-				"Create a new sheet",
-				fmt.Sprintf("Add %s data to the sheet", format),
-			},
-			spinner.WithWriter(cmd.ErrOrStderr()))
-		defer tasks.Close()
-		tasks.Start()
-
-		// 1. Read CSV data
-		sep := ','
-		if format == "tsv" {
-			sep = '\t'
-		}
-		valueRange, err := service.ReadCsv(r, sep)
-		if err != nil {
-			return err
-		}
-		tasks.Next()
-
-		// 2. Retrieve spreadsheet
-		spreadsheet, err := service.RetrieveSpreadsheet(ctx, spreadsheetId)
-		if err != nil {
-			return err
-		}
-		var sheetId int64
-		for _, sheet := range spreadsheet.Sheets {
-			if sheet.Properties.Title == title {
-				sheetId = sheet.Properties.SheetId
-				break
-			}
-		}
-		if sheetId != 0 && !doesAppend {
-			return fmt.Errorf("a sheet with the title \"%s\" already exists. Please enter another name or use --apend flag", title)
-		}
-		tasks.Next()
-
-		// 3. Create a new sheet
-		if !doesAppend {
-			insertedSheetId, err := service.CreateNewSheet(ctx, spreadsheetId, title)
-			if err != nil {
-				return err
-			}
-			sheetId = insertedSheetId
-			tasks.Next()
-		} else {
-			tasks.Skip()
-		}
-
-		// 4. Add CSV data to sheet
-		if err := service.AddCsvToSheet(ctx, spreadsheetId, title, a1Range, valueRange); err != nil {
-			return err
-		}
-		tasks.Next()
-
-		cmd.PrintErrln()
-		cmd.PrintErrf("Add %s data to Google Sheets successfully!", format)
-		cmd.PrintErrf("Open %s#gid=%d\n", spreadsheet.SpreadsheetUrl, sheetId)
-		cmd.PrintErrln()
-		return nil
-	}
 
 	return rootCmd
+}
+
+func run(cmd *cobra.Command, v *viper.Viper, fs afero.Fs, args []string) error {
+	spreadsheetId := v.GetString("id")
+	title := v.GetString("title")
+	a1Range := v.GetString("range")
+	doesAppend := v.GetBool("append")
+	file := v.GetString("file")
+	format := v.GetString("format")
+	format = strings.ToLower(format)
+	if spreadsheetId == "" {
+		return fmt.Errorf("spreadsheet ID is required. Use --id or -i")
+	}
+	if title == "" {
+		return fmt.Errorf("title is required. Use --title or -t")
+	}
+	if format != "csv" && format != "tsv" {
+		return fmt.Errorf("invalid format: %s", format)
+	}
+
+	ctx := cmd.Context()
+	service, err := internal.NewSheetsService(ctx)
+	if err != nil {
+		return err
+	}
+
+	r, err := cobrax.OpenOrStdIn(file, fs, cobrax.WithStdin(cmd.InOrStdin()))
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	in := file
+	if in == "" {
+		in = "stdin"
+	}
+	tasks := NewTasks(
+		[]string{
+			fmt.Sprintf("Read %s data from %s", format, in),
+			"Retrieve spreadsheet info",
+			"Create a new sheet",
+			fmt.Sprintf("Add %s data to the sheet", format),
+		},
+		spinner.WithWriter(cmd.ErrOrStderr()))
+	defer tasks.Close()
+	tasks.Start()
+
+	// 1. Read CSV data
+	sep := ','
+	if format == "tsv" {
+		sep = '\t'
+	}
+	valueRange, err := service.ReadCsv(r, sep)
+	if err != nil {
+		return err
+	}
+	tasks.Next()
+
+	// 2. Retrieve spreadsheet
+	spreadsheet, err := service.RetrieveSpreadsheet(ctx, spreadsheetId)
+	if err != nil {
+		return err
+	}
+	var sheetId int64
+	for _, sheet := range spreadsheet.Sheets {
+		if sheet.Properties.Title == title {
+			sheetId = sheet.Properties.SheetId
+			break
+		}
+	}
+	if sheetId != 0 && !doesAppend {
+		return fmt.Errorf("a sheet with the title \"%s\" already exists. Please enter another name or use --apend flag", title)
+	}
+	tasks.Next()
+
+	// 3. Create a new sheet
+	if !doesAppend {
+		insertedSheetId, err := service.CreateNewSheet(ctx, spreadsheetId, title)
+		if err != nil {
+			return err
+		}
+		sheetId = insertedSheetId
+		tasks.Next()
+	} else {
+		tasks.Skip()
+	}
+
+	// 4. Add CSV data to sheet
+	if err := service.AddCsvToSheet(ctx, spreadsheetId, title, a1Range, valueRange); err != nil {
+		return err
+	}
+	tasks.Next()
+
+	cmd.PrintErrln()
+	cmd.PrintErrf("Add %s data to Google Sheets successfully!", format)
+	cmd.PrintErrf("Open %s#gid=%d\n", spreadsheet.SpreadsheetUrl, sheetId)
+	cmd.PrintErrln()
+	return nil
 }
