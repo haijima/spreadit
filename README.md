@@ -77,6 +77,12 @@ You can install `spreadit` using the following command:
 go install github.com/haijima/spreadit@latest
 ```
 
+MacOS users can install stool using [Homebrew](https://brew.sh/) (See also [haijima/homebrew-tap](http://github.com/haijima/homebrew-tap)):
+
+``` sh
+brew install haijima/tap/spreadit
+```
+
 or you can download binaries from [Releases](https://github.com/haijima/spreadit/releases).
 
 ## License
