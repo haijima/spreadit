@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 	"github.com/haijima/cobrax"
 	"github.com/haijima/spreadit/internal"
 	"github.com/spf13/afero"
@@ -20,6 +22,14 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobra.Command {
 	rootCmd.Example = `  spreadit -f data.csv -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'
   cat data.csv | spreadit -i 1X2Y3Z4W5V6U7T8S9R0Q -t 'New Sheet'`
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		// Colorization settings
+		color.NoColor = color.NoColor || v.GetBool("no-color")
+		// Set Logger
+		lv := cobrax.VerbosityLevel(v)
+		l := slog.New(slog.NewTextHandler(cmd.ErrOrStderr(), &slog.HandlerOptions{Level: lv, AddSource: lv < slog.LevelDebug}))
+		slog.SetDefault(l)
+		cobrax.SetLogger(l)
+
 		return cobrax.RootPersistentPreRunE(cmd, v, fs, args)
 	}
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error { return run(cmd, v, fs, args) }
