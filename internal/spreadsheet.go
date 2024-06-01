@@ -5,20 +5,16 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"os"
 
-	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
-
-var DefaultOptions []option.ClientOption
 
 type SheetsService struct {
 	srv *sheets.Service
 }
 
 func NewSheetsService(ctx context.Context) (*SheetsService, error) {
-	srv, err := sheets.NewService(ctx, clientOptions()...)
+	srv, err := sheets.NewService(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Sheets client: %v", err)
 	}
@@ -83,9 +79,4 @@ func (s *SheetsService) AddCsvToSheet(ctx context.Context, spreadSheetId, sheetT
 		return fmt.Errorf("unable to add csv data to sheet: %v", err)
 	}
 	return nil
-}
-
-func clientOptions() []option.ClientOption {
-	credential := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	return append(DefaultOptions, option.WithCredentialsFile(credential))
 }
