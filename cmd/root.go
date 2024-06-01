@@ -137,7 +137,7 @@ func run(cmd *cobra.Command, v *viper.Viper, fs afero.Fs, args []string) error {
 	tasks.Next()
 
 	cmd.PrintErrln()
-	cmd.PrintErrf("Add %s data to Google Sheets successfully!", format)
+	cmd.PrintErrf("Add %s data to Google Sheets successfully!\n", format)
 	cmd.PrintErrf("Open %s#gid=%d\n", spreadsheet.SpreadsheetUrl, sheetId)
 	cmd.PrintErrln()
 	return nil
