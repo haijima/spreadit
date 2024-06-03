@@ -45,7 +45,7 @@ func NewRootCmd(v *viper.Viper, fs afero.Fs) *cobra.Command {
 	return rootCmd
 }
 
-func run(cmd *cobra.Command, v *viper.Viper, fs afero.Fs, args []string) error {
+func run(cmd *cobra.Command, v *viper.Viper, fs afero.Fs, _ []string) error {
 	spreadsheetId := v.GetString("id")
 	title := v.GetString("title")
 	a1Range := v.GetString("range")
