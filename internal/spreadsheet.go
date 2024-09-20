@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
 
@@ -14,7 +16,8 @@ type SheetsService struct {
 }
 
 func NewSheetsService(ctx context.Context) (*SheetsService, error) {
-	srv, err := sheets.NewService(ctx)
+	cred, err := google.FindDefaultCredentials(ctx, sheets.SpreadsheetsScope)
+	srv, err := sheets.NewService(ctx, option.WithCredentials(cred))
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Sheets client: %v", err)
 	}
