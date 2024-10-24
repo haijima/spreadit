@@ -65,9 +65,12 @@ Config file is searched in the following order:
 
 `spreadit` requires the Application Default Credentials (ADC) with below scopes
 - `https://www.googleapis.com/auth/spreadsheets`
-- `https://www.googleapis.com/auth/spreadsheets.readonly`
 
 See [here](https://cloud.google.com/docs/authentication/provide-credentials-adc) for more details.
+
+```
+gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/spreadsheets   
+```
 
 ## Install
 
